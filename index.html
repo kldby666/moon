@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>中秋快乐！</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -25,6 +25,8 @@
             animation: float 20s ease-in-out infinite;
             cursor: pointer;
             pointer-events: auto;
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
         }
         .moon-spot1 {
             position: absolute;
@@ -276,7 +278,7 @@
 <body class="bg-black overflow-hidden h-screen m-0 p-0">
     <!-- 添加背景音乐 -->
     <audio id="background-music" loop preload="auto">
-        <source src="https://m701.music.126.net/20250918220733/d7976588a559b73ed274984bb4da957b/jdymusic/obj/wo3DlMOGwrbDjj7DisKw/36268385962/606a/f052/0ed4/c98befada0bbda64959b10b6cfd4f566.mp3?vuutv=Bb7yKoNt/xJTr3k7nTDAAdo9ElrfTC12Yi5vtpqwwiBs5Y3c2ZUDsvnp+iLivjb4V7QFMr6QnrEyinYhG6+NlMJ+nr9/V8etFppQEitzjvmdAIqnsKHVWp2Tgt+ZunHfM6WBx92SsNkXuAkzqIvkeNpkpMah/iv49+WEWfdJ+q5HwUYzxoiH+sAL1I5420HKuaWYK08PPyTwZCmzbJMCnobyOc8gyHC/sseN16qdN/ii+zCEeI8j8DRLZ4/Da3PxrfxDqkhVYlLYDMQjZWSRc6FON1hOA1US08t4A6ZuqcqJpCF3CFqr6+WpA//7RIR12A7uG4Ie2kvlIcz9ANSNLRZfZm0YXrk0hsGELzG3by0IH6sfurx7I4mysa7PqLq5&cdntag=bWFyaz1vc193ZWIscXVhbGl0eV9zdGFuZGFyZA" type="audio/mpeg">
+        <source src="http://kldby666.github.io/moon/music.mp3" type="audio/mpeg">
         您的浏览器不支持音频播放。
     </audio>
     
@@ -690,27 +692,49 @@
             requestAnimationFrame(animate);
         }
         
-        // 月亮拖拽功能
-        moon.addEventListener('mousedown', (e) => {
+        // 月亮拖拽功能 - 同时支持鼠标和触摸
+        moon.addEventListener('mousedown', startDrag);
+        moon.addEventListener('touchstart', startDrag, { passive: false });
+
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('touchmove', drag, { passive: false });
+
+        document.addEventListener('mouseup', endDrag);
+        document.addEventListener('touchend', endDrag);
+
+        function startDrag(e) {
             isDraggingMoon = true;
             const rect = moonContainer.getBoundingClientRect();
-            moonOffsetX = e.clientX - rect.left;
-            moonOffsetY = e.clientY - rect.top;
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            moonOffsetX = clientX - rect.left;
+            moonOffsetY = clientY - rect.top;
             moonContainer.style.transition = 'none';
-            e.preventDefault();
-        });
-        
-        document.addEventListener('mousemove', (e) => {
-            if (isDraggingMoon) {
-                moonContainer.style.left = (e.clientX - moonOffsetX) + 'px';
-                moonContainer.style.top = (e.clientY - moonOffsetY) + 'px';
+            
+            if (e.touches) {
+                e.preventDefault(); // 阻止触摸事件的默认行为（如滚动）
             }
-        });
-        
-        document.addEventListener('mouseup', () => {
+        }
+
+        function drag(e) {
+            if (isDraggingMoon) {
+                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                
+                moonContainer.style.left = (clientX - moonOffsetX) + 'px';
+                moonContainer.style.top = (clientY - moonOffsetY) + 'px';
+                
+                if (e.touches) {
+                    e.preventDefault(); // 阻止触摸事件的默认行为（如滚动）
+                }
+            }
+        }
+
+        function endDrag() {
             isDraggingMoon = false;
             moonContainer.style.transition = 'transform 0.5s ease';
-        });
+        }
         
         // 月亮点击事件 - 释放特殊烟花
         moon.addEventListener('click', (e) => {
